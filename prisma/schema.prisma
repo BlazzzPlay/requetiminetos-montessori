@@ -1,0 +1,112 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String
+  password      String
+  role          Role           @default(ESPECIALISTA)
+  avatar        String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  recommendations Recommendation[]
+  notifications Notification[]
+}
+
+enum Role {
+  ESPECIALISTA
+  TERAPEUTA
+  ADMINISTRADOR
+}
+
+model Etapa {
+  id            Int            @id
+  nombre        String
+  rangoEdad     String
+  descripcion   String?
+  orden         Int
+  color         String         @default("#1E3A5F")
+  juegos        Juego[]
+  recomendaciones Recommendation[]
+}
+
+model Juego {
+  id            Int            @id @default(autoincrement())
+  nombre        String
+  descripcion   String
+  materiales    String[]
+  objetivos     String[]
+  presentacion  String
+  variaciones   String[]
+  observaciones String?
+  etapaId       Int
+  etapa         Etapa          @relation(fields: [etapaId], references: [id])
+  categoria     String
+  imagen        String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  recomendaciones Recommendation[]
+}
+
+model Nino {
+  id            String         @id @default(cuid())
+  nombre        String
+  apellido      String
+  fechaNacimiento DateTime
+  avatar        String?
+  notas         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  recomendaciones Recommendation[]
+}
+
+model Recommendation {
+  id            Int            @id @default(autoincrement())
+  ninoId        String
+  nino          Nino           @relation(fields: [ninoId], references: [id])
+  etapaId       Int
+  etapa         Etapa          @relation(fields: [etapaId], references: [id])
+  juegoId       Int
+  juego         Juego          @relation(fields: [juegoId], references: [id])
+  usuarioId     String
+  usuario       User           @relation(fields: [usuarioId], references: [id])
+  estado        EstadoRec      @default(PENDIENTE)
+  fechaRec      DateTime       @default(now())
+  notas         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+enum EstadoRec {
+  PENDIENTE
+  EN_REVISION
+  APROBADA
+  RECHAZADA
+}
+
+model Notification {
+  id            Int            @id @default(autoincrement())
+  titulo        String
+  mensaje       String
+  tipo          TipoNotif
+  leida         Boolean        @default(false)
+  usuarioId     String
+  usuario       User           @relation(fields: [usuarioId], references: [id])
+  createdAt     DateTime       @default(now())
+}
+
+enum TipoNotif {
+  NUEVA_RECOMENDACION
+  ESTADO_CAMBIADO
+  SISTEMA
+}
